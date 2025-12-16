@@ -3,10 +3,11 @@ import { Header } from "@/components/Header";
 import { FileUploadZone, type UploadedFile } from "@/components/FileUploadZone";
 import { ReportPreview } from "@/components/ReportPreview";
 import { Button } from "@/components/ui/button";
-import { FileText, Sparkles, Download, Loader2, Wand2 } from "lucide-react";
+import { FileText, Sparkles, Download, Loader2, Wand2, FileType } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToPDF } from "@/lib/pdfExport";
+import { exportToWord } from "@/lib/wordExport";
 import type { ReportData } from "@/types/report";
 
 export default function Index() {
@@ -84,6 +85,11 @@ export default function Index() {
   const handleDownloadPDF = async () => {
     if (!reportData) return;
     await exportToPDF(reportData);
+  };
+
+  const handleDownloadWord = async () => {
+    if (!reportData) return;
+    await exportToWord(reportData);
   };
 
   const totalFiles = materialFiles.length + transcriptFiles.length;
@@ -167,10 +173,16 @@ export default function Index() {
               </Button>
 
               {reportData && !isEditing && (
-                <Button variant="outline" size="xl" onClick={handleDownloadPDF} className="sm:w-auto">
-                  <Download className="w-5 h-5" />
-                  PDF 다운로드
-                </Button>
+                <div className="flex gap-2 sm:flex-row flex-col">
+                  <Button variant="outline" size="xl" onClick={handleDownloadPDF} className="sm:w-auto">
+                    <Download className="w-5 h-5" />
+                    PDF
+                  </Button>
+                  <Button variant="outline" size="xl" onClick={handleDownloadWord} className="sm:w-auto">
+                    <FileType className="w-5 h-5" />
+                    Word
+                  </Button>
+                </div>
               )}
             </div>
 
