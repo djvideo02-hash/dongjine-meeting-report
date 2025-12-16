@@ -195,7 +195,7 @@ export default function Index() {
 
       <footer className="border-t border-border mt-16 py-8">
         <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
-          <p>© 2024 MeetingMind. AI 기반 스마트 회의록 솔루션</p>
+          <p>© 2025 MeetingMind. AI 기반 스마트 회의록 솔루션</p>
         </div>
       </footer>
     </div>

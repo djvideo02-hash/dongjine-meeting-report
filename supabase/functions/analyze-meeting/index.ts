@@ -13,8 +13,13 @@ serve(async (req) => {
   try {
     const { materialContents, transcriptContent } = await req.json();
     
+    // Get current date in Korean format
+    const today = new Date();
+    const currentDate = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
+    
     console.log("Received material contents:", materialContents?.length || 0, "files");
     console.log("Received transcript:", transcriptContent ? "yes" : "no");
+    console.log("Current date:", currentDate);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -41,7 +46,7 @@ serve(async (req) => {
 다음 JSON 형식으로만 응답하세요:
 {
   "title": "회의 제목 (핵심 주제를 반영한 구체적인 제목)",
-  "date": "오늘 날짜 (YYYY년 MM월 DD일 형식)",
+  "date": "${currentDate}",
   "participants": ["참석자1", "참석자2"],
   "summary": "회의 전체 요약 (핵심 내용, 결론, 의의를 포함한 4-5문장의 상세한 요약)",
   "topics": [
