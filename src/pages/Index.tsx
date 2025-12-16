@@ -3,16 +3,10 @@ import { Header } from "@/components/Header";
 import { FileUploadZone, type UploadedFile } from "@/components/FileUploadZone";
 import { ReportPreview } from "@/components/ReportPreview";
 import { Button } from "@/components/ui/button";
-import {
-  FileText,
-  Sparkles,
-  Download,
-  Loader2,
-  Wand2,
-} from "lucide-react";
+import { FileText, Sparkles, Download, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import jsPDF from "jspdf";
+import { exportToPDF } from "@/lib/pdfExport";
 
 interface ReportData {
   title: string;
@@ -48,27 +42,20 @@ export default function Index() {
     toast.info("AI 분석을 시작합니다...");
 
     try {
-      // Read material files (for now, only text-based files)
       const materialContents = await Promise.all(
         materialFiles.map(async (f) => {
           try {
-            // Only read text-based files directly
             if (f.name.endsWith('.txt') || f.name.endsWith('.md')) {
               const content = await readFileAsText(f.file);
               return { name: f.name, content };
             }
-            // For other files, just include the file name as a note
-            return { 
-              name: f.name, 
-              content: `[${f.name} 파일이 첨부되었습니다. 추후 문서 파싱 기능이 추가될 예정입니다.]` 
-            };
+            return { name: f.name, content: `[${f.name} 파일이 첨부되었습니다.]` };
           } catch {
             return { name: f.name, content: `[${f.name} 파일을 읽을 수 없습니다]` };
           }
         })
       );
 
-      // Read transcript file
       let transcriptContent = "";
       if (transcriptFiles.length > 0) {
         try {
@@ -78,22 +65,12 @@ export default function Index() {
         }
       }
 
-      // Call the edge function
       const { data, error } = await supabase.functions.invoke("analyze-meeting", {
-        body: {
-          materialContents,
-          transcriptContent,
-        },
+        body: { materialContents, transcriptContent },
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
-      if (data?.error) {
-        throw new Error(data.error);
-      }
-
+      if (error) throw new Error(error.message);
+      if (data?.error) throw new Error(data.error);
       if (data?.report) {
         setReportData(data.report);
         toast.success("회의록 생성이 완료되었습니다!");
@@ -106,99 +83,9 @@ export default function Index() {
     }
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     if (!reportData) return;
-
-    toast.info("PDF 생성 중...");
-
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const margin = 20;
-    const contentWidth = pageWidth - margin * 2;
-    let yPos = 20;
-
-    // Helper function to add text with word wrap
-    const addWrappedText = (text: string, fontSize: number, isBold = false) => {
-      doc.setFontSize(fontSize);
-      doc.setFont("helvetica", isBold ? "bold" : "normal");
-      const lines = doc.splitTextToSize(text, contentWidth);
-      
-      lines.forEach((line: string) => {
-        if (yPos > 270) {
-          doc.addPage();
-          yPos = 20;
-        }
-        doc.text(line, margin, yPos);
-        yPos += fontSize * 0.5;
-      });
-      yPos += 5;
-    };
-
-    // Title
-    doc.setTextColor(184, 134, 11); // Gold color
-    addWrappedText("EXECUTIVE MEETING REPORT", 12, true);
-    
-    doc.setTextColor(0, 0, 0);
-    yPos += 5;
-    addWrappedText(reportData.title, 18, true);
-    
-    // Meta info
-    doc.setTextColor(100, 100, 100);
-    addWrappedText(`Date: ${reportData.date}`, 10);
-    addWrappedText(`Participants: ${reportData.participants.join(", ")}`, 10);
-    
-    yPos += 10;
-    doc.setTextColor(0, 0, 0);
-
-    // Summary
-    addWrappedText("EXECUTIVE SUMMARY", 12, true);
-    doc.setTextColor(50, 50, 50);
-    addWrappedText(reportData.summary, 10);
-    
-    yPos += 10;
-    doc.setTextColor(0, 0, 0);
-
-    // Topics
-    addWrappedText("KEY DISCUSSION POINTS", 12, true);
-    reportData.topics.forEach((topic, index) => {
-      doc.setTextColor(184, 134, 11);
-      addWrappedText(`${index + 1}. ${topic.title}`, 11, true);
-      doc.setTextColor(50, 50, 50);
-      addWrappedText(topic.content, 10);
-      yPos += 3;
-    });
-
-    yPos += 10;
-    doc.setTextColor(0, 0, 0);
-
-    // Follow-ups
-    addWrappedText("ACTION ITEMS", 12, true);
-    reportData.followUps.forEach((item, index) => {
-      doc.setTextColor(50, 50, 50);
-      addWrappedText(`${index + 1}. ${item.task}`, 10);
-      doc.setTextColor(100, 100, 100);
-      addWrappedText(`   Assignee: ${item.assignee} | Deadline: ${item.deadline}`, 9);
-      yPos += 2;
-    });
-
-    // Footer
-    const pageCount = doc.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        `Generated by MeetingMind | Page ${i} of ${pageCount}`,
-        pageWidth / 2,
-        285,
-        { align: "center" }
-      );
-    }
-
-    // Download
-    const fileName = `meeting-report-${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
-    toast.success("PDF 다운로드 완료!");
+    await exportToPDF(reportData);
   };
 
   const totalFiles = materialFiles.length + transcriptFiles.length;
@@ -208,7 +95,6 @@ export default function Index() {
       <Header />
 
       <main className="container mx-auto px-6 py-8">
-        {/* Hero Section */}
         <div className="text-center mb-12 animate-fade-in">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm mb-6">
             <Sparkles className="w-4 h-4" />
@@ -225,12 +111,8 @@ export default function Index() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Upload Section */}
           <div className="space-y-6">
-            <div
-              className="glass-card rounded-2xl p-6 animate-slide-up"
-              style={{ animationDelay: "100ms" }}
-            >
+            <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: "100ms" }}>
               <h2 className="text-xl font-serif font-semibold text-foreground mb-6 flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-info/10">
                   <FileText className="w-5 h-5 text-info" />
@@ -247,10 +129,7 @@ export default function Index() {
               />
             </div>
 
-            <div
-              className="glass-card rounded-2xl p-6 animate-slide-up"
-              style={{ animationDelay: "200ms" }}
-            >
+            <div className="glass-card rounded-2xl p-6 animate-slide-up" style={{ animationDelay: "200ms" }}>
               <h2 className="text-xl font-serif font-semibold text-foreground mb-6 flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-primary/10">
                   <FileText className="w-5 h-5 text-primary" />
@@ -268,11 +147,7 @@ export default function Index() {
               />
             </div>
 
-            {/* Action Buttons */}
-            <div
-              className="flex flex-col sm:flex-row gap-4 animate-slide-up"
-              style={{ animationDelay: "300ms" }}
-            >
+            <div className="flex flex-col sm:flex-row gap-4 animate-slide-up" style={{ animationDelay: "300ms" }}>
               <Button
                 variant="gold"
                 size="xl"
@@ -294,19 +169,13 @@ export default function Index() {
               </Button>
 
               {reportData && (
-                <Button
-                  variant="outline"
-                  size="xl"
-                  onClick={handleDownloadPDF}
-                  className="sm:w-auto"
-                >
+                <Button variant="outline" size="xl" onClick={handleDownloadPDF} className="sm:w-auto">
                   <Download className="w-5 h-5" />
                   PDF 다운로드
                 </Button>
               )}
             </div>
 
-            {/* Status */}
             {totalFiles > 0 && (
               <div className="text-sm text-muted-foreground text-center animate-fade-in">
                 총 {totalFiles}개 파일 준비됨
@@ -314,17 +183,12 @@ export default function Index() {
             )}
           </div>
 
-          {/* Right Column - Preview Section */}
-          <div
-            className="glass-card rounded-2xl p-6 lg:p-8 min-h-[600px] animate-slide-up"
-            style={{ animationDelay: "400ms" }}
-          >
+          <div className="glass-card rounded-2xl p-6 lg:p-8 min-h-[600px] animate-slide-up" style={{ animationDelay: "400ms" }}>
             <ReportPreview data={reportData} isLoading={isAnalyzing} />
           </div>
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="border-t border-border mt-16 py-8">
         <div className="container mx-auto px-6 text-center text-sm text-muted-foreground">
           <p>© 2024 MeetingMind. AI 기반 스마트 회의록 솔루션</p>
