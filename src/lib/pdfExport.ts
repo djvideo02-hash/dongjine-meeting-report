@@ -2,16 +2,16 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 
-interface ReportData {
+export interface PDFReportData {
   title: string;
   date: string;
   participants: string[];
   summary: string;
-  topics: { title: string; content: string }[];
-  followUps: { task: string; assignee: string; deadline: string }[];
+  topics: Array<{ title: string; content: string }>;
+  followUps: Array<{ task: string; assignee: string; deadline: string }>;
 }
 
-export async function exportToPDF(reportData: ReportData): Promise<void> {
+export async function exportToPDF(reportData: PDFReportData): Promise<void> {
   toast.info("PDF 생성 중...");
 
   const container = document.createElement("div");
