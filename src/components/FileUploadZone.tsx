@@ -1,12 +1,13 @@
 import { useCallback, useState } from "react";
-import { Upload, FileText, X, CheckCircle } from "lucide-react";
+import { FileText, X, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface UploadedFile {
+export interface UploadedFile {
   id: string;
   name: string;
   size: number;
   type: string;
+  file: File;
 }
 
 interface FileUploadZoneProps {
@@ -40,17 +41,23 @@ export function FileUploadZone({
     setIsDragging(false);
   }, []);
 
+  const processFiles = useCallback((fileList: FileList) => {
+    const newFiles = Array.from(fileList).map((file) => ({
+      id: crypto.randomUUID(),
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file,
+    }));
+    return newFiles;
+  }, []);
+
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
       e.preventDefault();
       setIsDragging(false);
 
-      const droppedFiles = Array.from(e.dataTransfer.files).map((file) => ({
-        id: crypto.randomUUID(),
-        name: file.name,
-        size: file.size,
-        type: file.type,
-      }));
+      const droppedFiles = processFiles(e.dataTransfer.files);
 
       if (multiple) {
         onFilesChange([...files, ...droppedFiles]);
@@ -58,18 +65,13 @@ export function FileUploadZone({
         onFilesChange(droppedFiles.slice(0, 1));
       }
     },
-    [files, onFilesChange, multiple]
+    [files, onFilesChange, multiple, processFiles]
   );
 
   const handleFileInput = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.files) {
-        const selectedFiles = Array.from(e.target.files).map((file) => ({
-          id: crypto.randomUUID(),
-          name: file.name,
-          size: file.size,
-          type: file.type,
-        }));
+        const selectedFiles = processFiles(e.target.files);
 
         if (multiple) {
           onFilesChange([...files, ...selectedFiles]);
@@ -78,7 +80,7 @@ export function FileUploadZone({
         }
       }
     },
-    [files, onFilesChange, multiple]
+    [files, onFilesChange, multiple, processFiles]
   );
 
   const removeFile = useCallback(
@@ -123,7 +125,7 @@ export function FileUploadZone({
             <p className="text-sm text-muted-foreground">{description}</p>
           </div>
           <p className="text-xs text-muted-foreground">
-            드래그하거나 클릭하여 업로드
+            드래그하거나 클릭하여 업로드 (최대 20MB)
           </p>
         </div>
       </div>
