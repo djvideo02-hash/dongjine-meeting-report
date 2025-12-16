@@ -1,5 +1,4 @@
 import { FileText, Calendar, Users, Target, CheckCircle2, ArrowRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface ReportData {
   title: string;
@@ -50,7 +49,6 @@ export function ReportPreview({ data, isLoading }: ReportPreviewProps) {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Header */}
       <div className="border-b border-border pb-6">
         <div className="flex items-center gap-2 text-primary mb-2">
           <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -71,7 +69,6 @@ export function ReportPreview({ data, isLoading }: ReportPreviewProps) {
         </div>
       </div>
 
-      {/* Executive Summary */}
       <section className="glass-card rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-lg bg-primary/10">
@@ -82,7 +79,6 @@ export function ReportPreview({ data, isLoading }: ReportPreviewProps) {
         <p className="text-foreground/90 leading-relaxed">{data.summary}</p>
       </section>
 
-      {/* Main Topics */}
       <section>
         <h2 className="text-xl font-serif font-semibold text-foreground mb-4 flex items-center gap-3">
           <div className="w-1 h-6 bg-primary rounded-full" />
@@ -93,7 +89,6 @@ export function ReportPreview({ data, isLoading }: ReportPreviewProps) {
             <div
               key={index}
               className="p-5 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-all duration-300"
-              style={{ animationDelay: `${index * 100}ms` }}
             >
               <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
                 <span className="text-primary font-mono text-sm">0{index + 1}</span>
@@ -107,7 +102,6 @@ export function ReportPreview({ data, isLoading }: ReportPreviewProps) {
         </div>
       </section>
 
-      {/* Follow-ups */}
       <section className="border-gradient-gold rounded-xl p-6 bg-card">
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 rounded-lg bg-primary/10">
