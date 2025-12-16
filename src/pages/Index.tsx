@@ -7,21 +7,14 @@ import { FileText, Sparkles, Download, Loader2, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { exportToPDF } from "@/lib/pdfExport";
-
-interface ReportData {
-  title: string;
-  date: string;
-  participants: string[];
-  summary: string;
-  topics: { title: string; content: string }[];
-  followUps: { task: string; assignee: string; deadline: string }[];
-}
+import type { ReportData } from "@/types/report";
 
 export default function Index() {
   const [materialFiles, setMaterialFiles] = useState<UploadedFile[]>([]);
   const [transcriptFiles, setTranscriptFiles] = useState<UploadedFile[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
 
   const readFileAsText = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -81,6 +74,11 @@ export default function Index() {
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleSaveReport = (updatedData: ReportData) => {
+    setReportData(updatedData);
+    toast.success("회의록이 저장되었습니다!");
   };
 
   const handleDownloadPDF = async () => {
@@ -168,7 +166,7 @@ export default function Index() {
                 )}
               </Button>
 
-              {reportData && (
+              {reportData && !isEditing && (
                 <Button variant="outline" size="xl" onClick={handleDownloadPDF} className="sm:w-auto">
                   <Download className="w-5 h-5" />
                   PDF 다운로드
@@ -183,8 +181,14 @@ export default function Index() {
             )}
           </div>
 
-          <div className="glass-card rounded-2xl p-6 lg:p-8 min-h-[600px] animate-slide-up" style={{ animationDelay: "400ms" }}>
-            <ReportPreview data={reportData} isLoading={isAnalyzing} />
+          <div className="glass-card rounded-2xl p-6 lg:p-8 min-h-[600px] animate-slide-up overflow-y-auto max-h-[calc(100vh-200px)]" style={{ animationDelay: "400ms" }}>
+            <ReportPreview 
+              data={reportData} 
+              isLoading={isAnalyzing} 
+              isEditing={isEditing}
+              onEditToggle={() => setIsEditing(!isEditing)}
+              onSave={handleSaveReport}
+            />
           </div>
         </div>
       </main>
