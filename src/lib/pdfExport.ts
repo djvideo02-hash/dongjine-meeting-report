@@ -101,6 +101,21 @@ export async function exportToPDF(reportData: ReportData): Promise<void> {
     `;
     await addCanvasToPdf(await renderSection(container, headerHtml, baseStyles));
 
+    // Meeting Purpose section
+    if (reportData.meetingPurpose && reportData.meetingPurpose.length > 0) {
+      const purposeHtml = `
+        <div class="wrapper">
+          <div class="section" style="border-left: 4px solid #3b82f6;">
+            <h2>🎯 회의 목적</h2>
+            <ul style="margin-top: 8px;">
+              ${reportData.meetingPurpose.map((purpose) => `<li>${purpose}</li>`).join('')}
+            </ul>
+          </div>
+        </div>
+      `;
+      await addCanvasToPdf(await renderSection(container, purposeHtml, baseStyles));
+    }
+
     // Summary section
     const summaryHtml = `
       <div class="wrapper">
@@ -137,11 +152,15 @@ export async function exportToPDF(reportData: ReportData): Promise<void> {
 
     for (let i = 0; i < reportData.topics.length; i++) {
       const topic = reportData.topics[i];
+      const subItemsHtml = topic.subItems && topic.subItems.length > 0
+        ? `<ul style="margin-top: 8px; margin-left: 8px;">${topic.subItems.map((sub) => `<li style="color: #666;">- ${sub}</li>`).join('')}</ul>`
+        : '';
       const topicHtml = `
         <div class="wrapper">
           <div class="topic">
-            <h3><span class="topic-num">0${i + 1}</span>${topic.title}</h3>
-            <p>${topic.content}</p>
+            <h3><span class="topic-num">${String(i + 1).padStart(2, '0')}</span>${topic.title}</h3>
+            <p style="white-space: pre-wrap;">${topic.content}</p>
+            ${subItemsHtml}
           </div>
         </div>
       `;
