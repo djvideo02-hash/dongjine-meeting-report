@@ -166,6 +166,51 @@ export function ReportPreview({ data, isLoading, isEditing, onEditToggle, onSave
         </div>
       </div>
 
+      {/* Meeting Purpose */}
+      {(currentData.meetingPurpose && currentData.meetingPurpose.length > 0 || isEditing) && (
+        <section className="glass-card rounded-xl p-6 border-l-4 border-info">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-info/10">
+                <Flag className="w-5 h-5 text-info" />
+              </div>
+              <h2 className="text-xl font-serif font-semibold text-foreground">회의 목적</h2>
+            </div>
+            {isEditing && (
+              <Button variant="ghost" size="sm" onClick={() => addArrayItem("meetingPurpose", "")}>
+                <Plus className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+          <ul className="space-y-2">
+            {(editData?.meetingPurpose || currentData.meetingPurpose || []).map((purpose, index) => (
+              <li key={index} className="flex items-start gap-3 text-foreground/90">
+                {isEditing ? (
+                  <div className="flex-1 flex gap-2">
+                    <Input
+                      value={purpose}
+                      onChange={(e) => {
+                        const arr = [...(editData?.meetingPurpose || [])];
+                        arr[index] = e.target.value;
+                        updateField("meetingPurpose", arr);
+                      }}
+                    />
+                    <Button variant="ghost" size="sm" onClick={() => removeArrayItem("meetingPurpose", index)}>
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <span className="text-info font-bold">•</span>
+                    <span>{purpose}</span>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Summary */}
       <section className="glass-card rounded-xl p-6">
         <div className="flex items-center gap-3 mb-4">
@@ -268,10 +313,20 @@ export function ReportPreview({ data, isLoading, isEditing, onEditToggle, onSave
               ) : (
                 <>
                   <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <span className="text-primary font-mono text-sm">0{index + 1}</span>
+                    <span className="text-primary font-mono text-sm">{String(index + 1).padStart(2, '0')}</span>
                     {topic.title}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{topic.content}</p>
+                  <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{topic.content}</p>
+                  {topic.subItems && topic.subItems.length > 0 && (
+                    <ul className="mt-3 space-y-1 ml-4">
+                      {topic.subItems.map((subItem, subIndex) => (
+                        <li key={subIndex} className="text-muted-foreground text-sm flex items-start gap-2">
+                          <span className="text-primary/60">-</span>
+                          <span>{subItem}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </>
               )}
             </div>

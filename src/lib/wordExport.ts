@@ -28,6 +28,25 @@ export async function exportToWord(data: ReportData): Promise<void> {
     })
   );
 
+  // Meeting Purpose
+  if (data.meetingPurpose && data.meetingPurpose.length > 0) {
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: "회의 목적", bold: true, size: 28 })],
+        heading: HeadingLevel.HEADING_2,
+        spacing: { before: 300, after: 100 },
+      })
+    );
+    data.meetingPurpose.forEach((purpose) => {
+      children.push(
+        new Paragraph({
+          children: [new TextRun({ text: `• ${purpose}`, size: 22 })],
+          spacing: { after: 80 },
+        })
+      );
+    });
+  }
+
   // Summary
   children.push(
     new Paragraph({
@@ -80,9 +99,20 @@ export async function exportToWord(data: ReportData): Promise<void> {
     children.push(
       new Paragraph({
         children: [new TextRun({ text: topic.content, size: 22 })],
-        spacing: { after: 150 },
+        spacing: { after: 100 },
       })
     );
+    // SubItems
+    if (topic.subItems && topic.subItems.length > 0) {
+      topic.subItems.forEach((subItem) => {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: `  - ${subItem}`, size: 20 })],
+            spacing: { after: 50 },
+          })
+        );
+      });
+    }
   });
 
   // Decisions
