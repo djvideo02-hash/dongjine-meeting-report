@@ -292,7 +292,7 @@ export function ReportPreview({ data, isLoading, isEditing, onEditToggle, onSave
           {currentData.topics.map((topic, index) => (
             <div key={index} className="p-5 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-all duration-300">
               {isEditing ? (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex gap-2">
                     <Input
                       value={editData?.topics[index]?.title || ""}
@@ -306,9 +306,57 @@ export function ReportPreview({ data, isLoading, isEditing, onEditToggle, onSave
                   <Textarea
                     value={editData?.topics[index]?.content || ""}
                     onChange={(e) => updateArrayItem("topics", index, "content", e.target.value)}
-                    placeholder="내용"
-                    rows={3}
+                    placeholder="내용 (선택사항)"
+                    rows={2}
                   />
+                  {/* SubItems editing */}
+                  <div className="ml-4 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">세부 항목</span>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => {
+                          const topics = [...(editData?.topics || [])];
+                          const subItems = [...(topics[index]?.subItems || []), ""];
+                          topics[index] = { ...topics[index], subItems };
+                          updateField("topics", topics);
+                        }}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {(editData?.topics[index]?.subItems || []).map((subItem, subIndex) => (
+                      <div key={subIndex} className="flex gap-2">
+                        <span className="text-primary/60 mt-2">-</span>
+                        <Input
+                          value={subItem}
+                          onChange={(e) => {
+                            const topics = [...(editData?.topics || [])];
+                            const subItems = [...(topics[index]?.subItems || [])];
+                            subItems[subIndex] = e.target.value;
+                            topics[index] = { ...topics[index], subItems };
+                            updateField("topics", topics);
+                          }}
+                          placeholder="세부 항목"
+                          className="flex-1"
+                        />
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => {
+                            const topics = [...(editData?.topics || [])];
+                            const subItems = [...(topics[index]?.subItems || [])];
+                            subItems.splice(subIndex, 1);
+                            topics[index] = { ...topics[index], subItems };
+                            updateField("topics", topics);
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <>
@@ -316,7 +364,9 @@ export function ReportPreview({ data, isLoading, isEditing, onEditToggle, onSave
                     <span className="text-primary font-mono text-sm">{String(index + 1).padStart(2, '0')}</span>
                     {topic.title}
                   </h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{topic.content}</p>
+                  {topic.content && (
+                    <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap">{topic.content}</p>
+                  )}
                   {topic.subItems && topic.subItems.length > 0 && (
                     <ul className="mt-3 space-y-1 ml-4">
                       {topic.subItems.map((subItem, subIndex) => (
